@@ -110,19 +110,14 @@ resource "aws_route_table_association" "mumbai_private_route_association" {
   route_table_id = aws_route_table.mumbai_private_route_table.id
 }
 
-resource "aws_key_pair" "mumbai_github_key" {
-  provider = aws.mumbai
-  key_name   = "mumbai-github-key"
-  public_key = file("~/.ssh/github-ec2-key.pub")  # Ensure the public key is generated locally
-}
-
+# Use pre-generated SSH key in Mumbai region
 resource "aws_instance" "mumbai_instance" {
   provider = aws.mumbai
   count = 3
   ami           = "ami-00bb6a80f01f03502"  # Provided Ubuntu AMI ID
   instance_type = "t2.medium"
   subnet_id     = aws_subnet.mumbai_public_subnet.id  # Public subnet in Mumbai
-  key_name = aws_key_pair.mumbai_github_key.key_name  # Use generated SSH key pair
+  key_name      = "PR_REGION"  # Use the pre-generated key file "PR_REGION.pem"
 
   associate_public_ip_address = true
 
@@ -221,19 +216,14 @@ resource "aws_route_table_association" "dr_private_route_association" {
   route_table_id = aws_route_table.dr_private_route_table.id
 }
 
-resource "aws_key_pair" "dr_github_key" {
-  provider = aws.dr_region
-  key_name   = "dr-github-key"
-  public_key = file("~/.ssh/github-ec2-key.pub")  # Ensure the public key is generated locally
-}
-
+# Use pre-generated SSH key in DR region
 resource "aws_instance" "dr_instance" {
   provider = aws.dr_region
   count = 3
   ami           = "ami-04b4f1a9cf54c11d0"  # Same Ubuntu AMI ID for DR region
   instance_type = "t2.medium"
   subnet_id     = aws_subnet.dr_public_subnet.id  # Public subnet in DR region
-  key_name = aws_key_pair.dr_github_key.key_name  # Use the SSH key pair from DR
+  key_name      = "DR_REGION"  # Use the pre-generated key file "DR_REGION.pem"
 
   associate_public_ip_address = true
 
