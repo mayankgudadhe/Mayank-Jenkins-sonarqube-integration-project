@@ -230,7 +230,7 @@ resource "aws_key_pair" "dr_github_key" {
 resource "aws_instance" "dr_instance" {
   provider = aws.dr_region
   count = 3
-  ami           = "ami-00bb6a80f01f03502"  # Same Ubuntu AMI ID for DR region
+  ami           = "ami-04b4f1a9cf54c11d0"  # Same Ubuntu AMI ID for DR region
   instance_type = "t2.medium"
   subnet_id     = aws_subnet.dr_public_subnet.id  # Public subnet in DR region
   key_name = aws_key_pair.dr_github_key.key_name  # Use the SSH key pair from DR
