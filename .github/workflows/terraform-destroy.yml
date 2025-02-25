@@ -1,13 +1,7 @@
 name: Terraform Destroy
 
 on:
-  workflow_dispatch:  # Manually triggered workflow (for destroy action)
-    inputs:
-      environment:
-        description: 'Environment to destroy (e.g., dev, prod)'
-        required: true
-        default: 'dev'
-
+  workflow_dispatch:
 jobs:
   terraform-destroy:
     runs-on: ubuntu-latest
@@ -43,8 +37,8 @@ jobs:
 
       # Terraform Plan (optional)
       - name: Terraform Plan (Destroy)
-        run: terraform plan -destroy -var="environment=${{ github.event.inputs.environment }}"
+        run: terraform plan 
 
       # Terraform Destroy
       - name: Terraform Destroy
-        run: terraform destroy -auto-approve -var="environment=${{ github.event.inputs.environment }}"
+        run: terraform destroy -auto-approve 
