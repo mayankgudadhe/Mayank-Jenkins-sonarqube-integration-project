@@ -1,0 +1,51 @@
+name: Terraform CI/CD for AWS Infrastructure
+
+on:
+  push:
+    branches:
+      - main  # Trigger on push to the main branch
+  pull_request:
+    branches:
+      - main  # Trigger on PR to the main branch
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.4.0  # Specify Terraform version here
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          region: ap-south-1  # Mumbai region
+
+      - name: Generate SSH Key Pair
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keygen -t rsa -b 4096 -f ~/.ssh/github-ec2-key -N ""
+        
+      - name: Store SSH Private Key as Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ec2-ssh-key
+          path: ~/.ssh/github-ec2-key
+
+      - name: Initialize Terraform
+        run: terraform init
+
+      - name: Validate Terraform Configuration
+        run: terraform validate
+
+      - name: Plan Terraform Deployment
+        run: terraform plan
+
+      - name: Apply Terraform Configuration
+        run: terraform apply -auto-approve
