@@ -248,10 +248,21 @@ resource "aws_vpc_peering_connection" "vpc_peering" {
   vpc_id      = aws_vpc.mumbai_vpc.id
   peer_vpc_id = aws_vpc.dr_vpc.id
   peer_region = "us-east-1"  # DR region
-  auto_accept = true
+  auto_accept = false  # Disable auto-accept, as it cannot be used with peer_region
 
   tags = {
     Name = "Mumbai-to-DR-VPC-Peering"
+  }
+}
+
+# Accept the VPC Peering Connection on DR Region (Peer VPC)
+resource "aws_vpc_peering_connection_accepter" "dr_vpc_peering_accepter" {
+  provider                  = aws.dr_region
+  vpc_peering_connection_id = aws_vpc_peering_connection.vpc_peering.id
+  auto_accept               = true  # Automatically accept on the DR side
+
+  tags = {
+    Name = "DR-to-Mumbai-VPC-Peering"
   }
 }
 
