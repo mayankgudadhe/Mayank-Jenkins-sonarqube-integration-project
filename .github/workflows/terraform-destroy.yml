@@ -1,0 +1,50 @@
+name: Terraform Destroy
+
+on:
+  workflow_dispatch:  # Manually triggered workflow (for destroy action)
+    inputs:
+      environment:
+        description: 'Environment to destroy (e.g., dev, prod)'
+        required: true
+        default: 'dev'
+
+jobs:
+  terraform-destroy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      # Checkout the code from your repository
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # Set up Terraform
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.0  # You can specify the required version
+
+      # Configure AWS credentials using GitHub secrets
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws_region: 'ap-south-1'  # Change to your preferred region
+
+      # Initialize Terraform with the S3 backend
+      - name: Terraform Init
+        run: |
+          terraform init \
+            -backend-config="bucket=sonarcube-backend-bucket" \
+            -backend-config="key=terraform/state.tfstate" \
+            -backend-config="region=ap-south-1" \
+            -backend-config="encrypt=true" \
+            -backend-config="acl=bucket-owner-full-control"
+
+      # Terraform Plan (optional)
+      - name: Terraform Plan (Destroy)
+        run: terraform plan -destroy -var="environment=${{ github.event.inputs.environment }}"
+
+      # Terraform Destroy
+      - name: Terraform Destroy
+        run: terraform destroy -auto-approve -var="environment=${{ github.event.inputs.environment }}"
