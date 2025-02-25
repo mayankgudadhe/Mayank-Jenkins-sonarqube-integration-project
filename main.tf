@@ -1,3 +1,13 @@
+terraform {
+  backend "s3" {
+    bucket = "sonarcube-backend-bucket"        # Replace with your S3 bucket name
+    key    = "terraform/state.tfstate"         # Path within the bucket to store the state file
+    region = "ap-south-1"                      # Your desired region for S3
+    encrypt = true                             # Enable encryption for state file
+    acl     = "bucket-owner-full-control"      # Set permissions for the state file
+  }
+}
+
 # Mumbai Region Provider
 provider "aws" {
   region = "ap-south-1"  # Mumbai region
