@@ -33,7 +33,7 @@ jobs:
           ssh-keygen -t rsa -b 4096 -f ~/.ssh/github-ec2-key -N ""
         
       - name: Store SSH Private Key as Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ec2-ssh-key
           path: ~/.ssh/github-ec2-key
