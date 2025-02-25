@@ -110,7 +110,7 @@ resource "aws_route_table_association" "mumbai_private_route_association" {
   route_table_id = aws_route_table.mumbai_private_route_table.id
 }
 
-# Mumbai Custom Security Group
+# Mumbai Security Group
 resource "aws_security_group" "mumbai_sg" {
   provider = aws.mumbai
   name        = "mumbai-sg"
@@ -146,114 +146,7 @@ resource "aws_security_group" "mumbai_sg" {
   }
 }
 
-# Use pre-generated SSH key in Mumbai region
-resource "aws_instance" "mumbai_instance" {
-  provider = aws.mumbai
-  count = 3
-  ami           = "ami-00bb6a80f01f03502"  # Provided Ubuntu AMI ID
-  instance_type = "t2.medium"
-  subnet_id     = aws_subnet.mumbai_public_subnet.id  # Public subnet in Mumbai
-  key_name      = "PR_REGION"  # Use the pre-generated key file "PR_REGION.pem"
-  security_groups = [aws_security_group.mumbai_sg.name]
-
-  associate_public_ip_address = true
-
-  tags = {
-    Name = "Mumbai-EC2-${count.index + 1}"
-  }
-}
-
-# --- DR Region Resources ---
-resource "aws_vpc" "dr_vpc" {
-  provider = aws.dr_region
-  cidr_block = "10.20.0.0/16"
-  enable_dns_support = true
-  enable_dns_hostnames = true
-  tags = {
-    Name = "DR-VPC"
-  }
-}
-
-resource "aws_subnet" "dr_public_subnet" {
-  provider = aws.dr_region
-  vpc_id     = aws_vpc.dr_vpc.id
-  cidr_block = "10.20.1.0/24"
-  availability_zone = "us-east-1a"
-  map_public_ip_on_launch = true
-  tags = {
-    Name = "DR-Public-Subnet"
-  }
-}
-
-resource "aws_subnet" "dr_private_subnet" {
-  provider = aws.dr_region
-  vpc_id     = aws_vpc.dr_vpc.id
-  cidr_block = "10.20.2.0/24"
-  availability_zone = "us-east-1b"
-  tags = {
-    Name = "DR-Private-Subnet"
-  }
-}
-
-resource "aws_internet_gateway" "dr_igw" {
-  provider = aws.dr_region
-  vpc_id = aws_vpc.dr_vpc.id
-  tags = {
-    Name = "DR-Internet-Gateway"
-  }
-}
-
-resource "aws_eip" "dr_nat_eip" {
-  provider = aws.dr_region
-  vpc = true
-}
-
-resource "aws_nat_gateway" "dr_nat_gw" {
-  provider = aws.dr_region
-  allocation_id = aws_eip.dr_nat_eip.id
-  subnet_id     = aws_subnet.dr_public_subnet.id
-  tags = {
-    Name = "DR-NAT-Gateway"
-  }
-}
-
-resource "aws_route_table" "dr_public_route_table" {
-  provider = aws.dr_region
-  vpc_id = aws_vpc.dr_vpc.id
-  route {
-    cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.dr_igw.id
-  }
-  tags = {
-    Name = "DR-Public-Route-Table"
-  }
-}
-
-resource "aws_route_table_association" "dr_public_route_association" {
-  provider      = aws.dr_region
-  subnet_id      = aws_subnet.dr_public_subnet.id
-  route_table_id = aws_route_table.dr_public_route_table.id
-}
-
-resource "aws_route_table" "dr_private_route_table" {
-  provider = aws.dr_region
-  vpc_id = aws_vpc.dr_vpc.id
-  route {
-    cidr_block = "0.0.0.0/0"
-    nat_gateway_id = aws_nat_gateway.dr_nat_gw.id
-  }
-  tags = {
-    Name = "DR-Private-Route-Table"
-  }
-}
-
-resource "aws_route_table_association" "dr_private_route_association" {
-  provider      = aws.dr_region
-  subnet_id      = aws_subnet.dr_private_subnet.id
-  route_table_id = aws_route_table.dr_private_route_table.id
-}
-
-# DR Custom Security Group
+# DR Security Group
 resource "aws_security_group" "dr_sg" {
   provider = aws.dr_region
   name        = "dr-sg"
@@ -289,7 +182,26 @@ resource "aws_security_group" "dr_sg" {
   }
 }
 
-# Use pre-generated SSH key in DR region
+# Mumbai EC2 instances
+resource "aws_instance" "mumbai_instance" {
+  provider = aws.mumbai
+  count = 3
+  ami           = "ami-00bb6a80f01f03502"  # Provided Ubuntu AMI ID
+  instance_type = "t2.medium"
+  subnet_id     = aws_subnet.mumbai_public_subnet.id  # Public subnet in Mumbai
+  key_name      = "PR_REGION"  # Use the pre-generated key file "PR_REGION.pem"
+  security_groups = [aws_security_group.mumbai_sg.name]
+
+  associate_public_ip_address = true
+
+  tags = {
+    Name = "Mumbai-EC2-${count.index + 1}"
+  }
+
+  depends_on = [aws_security_group.mumbai_sg]  # Ensures security group is created first
+}
+
+# DR EC2 instances
 resource "aws_instance" "dr_instance" {
   provider = aws.dr_region
   count = 3
@@ -304,6 +216,8 @@ resource "aws_instance" "dr_instance" {
   tags = {
     Name = "DR-EC2-${count.index + 1}"
   }
+
+  depends_on = [aws_security_group.dr_sg]  # Ensures security group is created first
 }
 
 # VPC Peering between Mumbai and DR VPC
