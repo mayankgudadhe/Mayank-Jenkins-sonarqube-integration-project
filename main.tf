@@ -110,6 +110,42 @@ resource "aws_route_table_association" "mumbai_private_route_association" {
   route_table_id = aws_route_table.mumbai_private_route_table.id
 }
 
+# Mumbai Custom Security Group
+resource "aws_security_group" "mumbai_sg" {
+  provider = aws.mumbai
+  name        = "mumbai-sg"
+  description = "Allow SSH, HTTP, and HTTPS traffic"
+  vpc_id      = aws_vpc.mumbai_vpc.id
+
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
 # Use pre-generated SSH key in Mumbai region
 resource "aws_instance" "mumbai_instance" {
   provider = aws.mumbai
@@ -118,6 +154,7 @@ resource "aws_instance" "mumbai_instance" {
   instance_type = "t2.medium"
   subnet_id     = aws_subnet.mumbai_public_subnet.id  # Public subnet in Mumbai
   key_name      = "PR_REGION"  # Use the pre-generated key file "PR_REGION.pem"
+  security_groups = [aws_security_group.mumbai_sg.name]
 
   associate_public_ip_address = true
 
@@ -216,6 +253,42 @@ resource "aws_route_table_association" "dr_private_route_association" {
   route_table_id = aws_route_table.dr_private_route_table.id
 }
 
+# DR Custom Security Group
+resource "aws_security_group" "dr_sg" {
+  provider = aws.dr_region
+  name        = "dr-sg"
+  description = "Allow SSH, HTTP, and HTTPS traffic"
+  vpc_id      = aws_vpc.dr_vpc.id
+
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
 # Use pre-generated SSH key in DR region
 resource "aws_instance" "dr_instance" {
   provider = aws.dr_region
@@ -224,6 +297,7 @@ resource "aws_instance" "dr_instance" {
   instance_type = "t2.medium"
   subnet_id     = aws_subnet.dr_public_subnet.id  # Public subnet in DR region
   key_name      = "DR_REGION"  # Use the pre-generated key file "DR_REGION.pem"
+  security_groups = [aws_security_group.dr_sg.name]
 
   associate_public_ip_address = true
 
