@@ -154,7 +154,7 @@ resource "aws_instance" "mumbai_instance" {
   instance_type = "t2.medium"
   subnet_id     = aws_subnet.mumbai_public_subnet.id  # Public subnet in Mumbai
   key_name      = "PR_REGION"  # Use the pre-generated key file "PR_REGION.pem"
-  security_group_ids = [aws_security_group.mumbai_sg.name]
+  security_group_id = [aws_security_group.mumbai_sg.name]
 
   associate_public_ip_address = true
 
@@ -298,7 +298,7 @@ resource "aws_instance" "dr_instance" {
   instance_type = "t2.medium"
   subnet_id     = aws_subnet.dr_public_subnet.id  # Public subnet in DR region
   key_name      = "DR_REGION"  # Use the pre-generated key file "DR_REGION.pem"
-  security_group_ids = [aws_security_group.dr_sg.name]
+  security_group_id = [aws_security_group.dr_sg.name]
 
   associate_public_ip_address = true
 
