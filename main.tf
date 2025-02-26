@@ -161,6 +161,7 @@ resource "aws_instance" "mumbai_instance" {
   tags = {
     Name = "Mumbai-EC2-${count.index + 1}"
   }
+  depends_on = [aws_security_group.mumbai_sg]
 }
 
 # --- DR Region Resources ---
@@ -304,6 +305,7 @@ resource "aws_instance" "dr_instance" {
   tags = {
     Name = "DR-EC2-${count.index + 1}"
   }
+  depends_on = [aws_security_group.dr_sg]
 }
 
 # VPC Peering between Mumbai and DR VPC
